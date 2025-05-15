@@ -8,6 +8,13 @@ php artisan migrate
 npm install
 npm run dev
 
-VIdeo Tutorial 
+VIdeo Tutorial
 
 https://www.youtube.com/watch?v=RXtWhyTTS-I&ab_channel=HardikSavani%28ItSolutionStuff%29
+
+
+composer require laravel-lang/lang --dev
+
+php artisan lang:publish
+
+php artisan lang:update
