@@ -18,3 +18,18 @@ composer require laravel-lang/lang --dev
 php artisan lang:publish
 
 php artisan lang:update
+
+
+composer require opcodesio/log-viewer
+
+
+php artisan log-viewer:publish
+
+
+php artisan vendor:publish --tag=log-viewer-config
+
+
+
+composer require laravel/telescope
+
+
