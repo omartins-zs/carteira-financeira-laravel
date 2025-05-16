@@ -2,127 +2,107 @@
 
 namespace App\Http\Controllers;
 
-
-use Illuminate\Http\Request;
-use App\Models\User;
+use App\Http\Requests\DepositRequest;
+use App\Http\Requests\TransferRequest;
 use App\Models\Transaction;
-use Illuminate\Support\Facades\DB;
+use App\Services\WalletService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class WalletController extends Controller
 {
-    public function index()
-    {
-        $transactions = auth()->user()
-            ->transactions()
-            ->with('targetUser')
-            ->latest()
-            ->get();
+    private WalletService $walletService;
 
-        return view('wallets.index', [
-            'transactions' => $transactions,
-            'users'        => User::where('id', '!=', auth()->id())->get(),
-        ]);
+    public function __construct(WalletService $walletService)
+    {
+        $this->walletService = $walletService;
     }
 
-    public function showDepositForm()
+    /**
+     * Exibe o dashboard da carteira.
+     */
+    public function index(): View
+    {
+        $user = auth()->user();
+        $transactions = $this->walletService->getHistory($user);
+        $users = $this->walletService->getOtherUsers($user);
+
+        return view('wallets.index', compact('transactions', 'users'));
+    }
+
+    /**
+     * Exibe o formulário de depósito.
+     */
+    public function showDepositForm(): View
     {
         return view('wallets.deposit');
     }
 
-    public function deposit(Request $request)
-    {
-        $request->validate(['amount' => 'required|numeric|min:0.01']);
-
-        DB::transaction(function () use ($request) {
-            $user = auth()->user();
-            $user->balance += $request->amount;
-            $user->save();
-
-            Transaction::create([
-                'user_id' => $user->id,
-                'type'    => 'deposit',
-                'amount'  => $request->amount,
-                'status'  => 'completed',
-            ]);
-        });
-
-        return redirect()->route('wallets.index')
-            ->with('success', 'Depósito realizado com sucesso!');
-    }
-
-    public function showTransferForm()
-    {
-        return view('wallets.transfer', [
-            'users' => User::where('id', '!=', auth()->id())->get(),
-        ]);
-    }
-
-    public function transfer(Request $request)
-    {
-        $request->validate([
-            'to_user_id' => 'required|exists:users,id',
-            'amount'     => 'required|numeric|min:0.01',
-        ]);
-
-        $from = auth()->user();
-        $to   = User::findOrFail($request->to_user_id);
-
-        if ($from->id === $to->id) {
-            return back()->withErrors(['to_user_id' => 'Não é possível transferir para você mesmo.']);
-        }
-        if ($from->balance < $request->amount) {
-            return back()->withErrors(['amount' => 'Saldo insuficiente.']);
-        }
-
-        DB::transaction(function () use ($from, $to, $request) {
-            $from->balance -= $request->amount;
-            $from->save();
-
-            $to->balance += $request->amount;
-            $to->save();
-
-            Transaction::create([
-                'user_id'        => $from->id,
-                'target_user_id' => $to->id,
-                'type'           => 'transfer',
-                'amount'         => $request->amount,
-                'status'         => 'completed',
-            ]);
-        });
-
-        return redirect()->route('wallets.index')
-            ->with('success', 'Transferência realizada com sucesso!');
-    }
-
-    public function reverse(Transaction $transaction)
+    /**
+     * Realiza um depósito.
+     */
+    public function deposit(DepositRequest $request): RedirectResponse
     {
         $user = auth()->user();
 
-        // Verifica propriedade e status
-        if ($transaction->user_id !== $user->id || $transaction->status !== 'completed') {
-            abort(403);
+        try {
+            $this->walletService->deposit($user, $request->amount);
+            return redirect()->route('wallet.index')
+                ->with('success', 'Depósito realizado com sucesso!');
+        } catch (\Exception $e) {
+            report($e);
+            return back()->withErrors('deposit', 'Erro ao processar depósito.')->withInput();
         }
+    }
 
-        DB::transaction(function () use ($transaction, $user) {
-            if ($transaction->type === 'deposit') {
-                $user->balance -= $transaction->amount;
-                $user->save();
-            } elseif ($transaction->type === 'transfer' && $transaction->target_user_id) {
-                $recipient = User::find($transaction->target_user_id);
-                if ($recipient) {
-                    $user->balance += $transaction->amount;
-                    $user->save();
+    /**
+     * Exibe o formulário de transferência.
+     */
+    public function showTransferForm(): View
+    {
+        $users = $this->walletService->getOtherUsers(auth()->user());
+        return view('wallets.transfer', compact('users'));
+    }
 
-                    $recipient->balance -= $transaction->amount;
-                    $recipient->save();
-                }
-            }
+    /**
+     * Realiza uma transferência.
+     */
+    public function transfer(TransferRequest $request): RedirectResponse
+    {
+        $from = auth()->user();
 
-            $transaction->status = 'reversed';
-            $transaction->save();
-        });
+        try {
+            $this->walletService->transfer(
+                $from,
+                $request->to_user_id,
+                $request->amount
+            );
+            return redirect()->route('wallet.index')
+                ->with('success', 'Transferência realizada com sucesso!');
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors($e->getMessage())->withInput();
+        } catch (\Exception $e) {
+            report($e);
+            return back()->withErrors('transfer', 'Erro ao processar transferência.')->withInput();
+        }
+    }
 
-        return redirect()->route('wallet.index')
-            ->with('success', 'Transação revertida com sucesso.');
+    /**
+     * Reverte uma transação.
+     */
+    public function reverse(Transaction $transaction): RedirectResponse
+    {
+        $user = auth()->user();
+
+        try {
+            $this->walletService->reverse($user, $transaction);
+            return redirect()->route('wallet.index')
+                ->with('success', 'Transação revertida com sucesso!');
+        } catch (\LogicException $e) {
+            return back()->withErrors($e->getMessage());
+        } catch (\Exception $e) {
+            report($e);
+            return back()->withErrors('reverse', 'Erro ao reverter transação.');
+        }
     }
 }
