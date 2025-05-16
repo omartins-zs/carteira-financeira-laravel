@@ -23,6 +23,9 @@ class User extends Authenticatable
         'password',
         'two_factor_code',
         'two_factor_expires_at',
+        'birthdate',
+        'phone',
+        'address',
     ];
 
     /**
