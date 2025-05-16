@@ -63,4 +63,13 @@ class User extends Authenticatable
         $this->two_factor_expires_at = null;
         $this->save();
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+    public function incomingTransactions()
+    {
+        return $this->hasMany(Transaction::class, 'target_user_id');
+    }
 }
