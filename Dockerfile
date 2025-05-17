@@ -17,7 +17,9 @@ RUN apt-get update && apt-get install -y \
     sqlite3 \
     libsqlite3-dev \
     supervisor \
-    vim
+    vim \
+    nano \
+    default-mysql-client
 
 # Instala extensões PHP necessárias
 RUN docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath gd
@@ -41,5 +43,9 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Exponha a porta do PHP-FPM (9000)
 EXPOSE 9000
 
-# Comando padrão para rodar PHP-FPM
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["entrypoint.sh"]
+
 CMD ["php-fpm"]
