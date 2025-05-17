@@ -37,8 +37,8 @@ Este é um projeto de teste desenvolvido com Laravel + Breeze com o objetivo de 
 
 ```bash
 # Clonar o repositório
-git clone https://github.com/seu-usuario/seu-projeto.git
-cd seu-projeto
+git clone https://github.com/omartins-zs/carteira-financeira-laravel.git
+cd carteira-financeira-laravel
 
 # Instalar dependências
 composer install
