@@ -12,15 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transactions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('wallet_id_from')->nullable()->constrained('wallets')->nullOnDelete();
-            $table->foreignId('wallet_id_to')->nullable()->constrained('wallets')->nullOnDelete();
-            $table->enum('type', ['deposit','transfer']);
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id');          // originador
+            $table->unsignedBigInteger('target_user_id')->nullable(); // recebedor (nulo em depósito “externo”)
+            $table->enum('type', ['deposit','transfer','reversal']);
             $table->decimal('amount', 15, 2);
-            $table->enum('status', ['pending','completed','reversed','failed'])->default('pending');
-            $table->timestamp('reversed_at')->nullable();
-            $table->text('notes')->nullable();
+            $table->string('status')->default('completed');
+            $table->unsignedBigInteger('reverses_id')->nullable(); // id da tx que esta reversão “anula”
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('target_user_id')->references('id')->on('users');
+            $table->foreign('reverses_id')->references('id')->on('transactions');
         });
     }
 
