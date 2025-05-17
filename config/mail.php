@@ -39,6 +39,7 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
+            'queue' => true,
             'scheme' => env('MAIL_SCHEME'),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
