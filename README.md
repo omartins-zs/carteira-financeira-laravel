@@ -48,6 +48,9 @@ composer install
 docker cp .env.example .env
 php artisan key:generate
 
+# Build do Projeto
+docker compose up --build
+
 # Rodar migrações
 docker-compose exec app php artisan migrate
 
