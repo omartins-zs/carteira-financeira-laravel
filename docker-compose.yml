@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  app:
+    image: laravelphp/php-fpm
+    container_name: wallet-app
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    networks:
+      - wallet-network
+
+  nginx:
+    image: nginx:latest
+    container_name: wallet-nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - app
+    networks:
+      - wallet-network
+
+  db:
+    image: mysql:8
+    container_name: wallet-db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: wallet
+      MYSQL_USER: user
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - wallet-network
+
+volumes:
+  db_data:
+
+networks:
+  wallet-network:
