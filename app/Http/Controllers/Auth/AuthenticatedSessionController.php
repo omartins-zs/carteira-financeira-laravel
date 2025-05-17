@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
         $request->user()->regenerateTwoFactorCode();
         $request->user()->notify(new TwoFactorCodeNotification());
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('wallet.index'));
     }
 
     /**
