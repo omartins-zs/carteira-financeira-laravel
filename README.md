@@ -14,6 +14,10 @@ Este é um projeto de teste desenvolvido com Laravel + Breeze com o objetivo de 
 - Validação completa de dados
 - Middleware de autenticação
 - Dashboard de usuário
+- Autenticação em dois fatores (2FA)
+- **Notificações personalizadas**:
+  - Verificação de e-mail
+  - Envio de código 2FA
 - Observabilidade com **Log Viewer** e **Laravel Telescope**
 
 ---
@@ -32,24 +36,32 @@ Este é um projeto de teste desenvolvido com Laravel + Breeze com o objetivo de 
 ## 📦 Instalação
 
 ```bash
-git clone https://github.com/seu-usuario/carteira-financeira-laravel.git
-cd carteira-financeira-laravel
+# Clonar o repositório
+git clone https://github.com/seu-usuario/seu-projeto.git
+cd seu-projeto
 
-# Instale as dependências
+# Instalar dependências
 composer install
-npm install && npm run dev
 
-# Copie o arquivo .env e configure as variáveis
-cp .env.example .env
-
-# Gere a chave da aplicação
+# Copiar .env e configurar
+docker cp .env.example .env
 php artisan key:generate
 
-# Execute as migrations
-php artisan migrate
+# Rodar migrações
+docker-compose exec app php artisan migrate
 
-# (Opcional) Popule com dados de teste
-php artisan db:seed
+# (Opcional) Popular o banco com dados de exemplo
+docker-compose exec app php artisan db:seed
+```
+
+---
+
+## 🧪 Testes
+
+Para rodar os testes, use o comando abaixo:
+
+```bash
+php artisan test
 ```
 
 ---
@@ -83,6 +95,8 @@ Ferramenta oficial do Laravel para inspeção de:
 ## 🔐 Autenticação
 
 O projeto utiliza **Laravel Breeze** com Blade como motor de templates, já com rotas e views de login, registro, redefinição de senha e verificação de e-mail.
+
+Além disso, conta com **autenticação em dois fatores (2FA)** e **notificações personalizadas** para envio do código de autenticação e verificação de e-mail.
 
 ---
 
