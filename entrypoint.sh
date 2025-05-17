@@ -8,6 +8,6 @@ done
 echo "Banco de dados disponível. Executando comandos Laravel..."
 
 php artisan migrate --force
-php artisan db:seed --force
+php artisan db:seed 
 
 exec php-fpm
