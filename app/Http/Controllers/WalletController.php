@@ -7,6 +7,7 @@ use App\Http\Requests\TransferRequest;
 use App\Models\Transaction;
 use App\Services\WalletService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class WalletController extends Controller
@@ -69,21 +70,40 @@ class WalletController extends Controller
      */
     public function transfer(TransferRequest $request): RedirectResponse
     {
-        $from = auth()->user();
+        $from       = auth()->user();
+        $toUserId   = $request->to_user_id;
+        $amount     = $request->amount;
+
+        // Verificação de saldo disponível
+        if ($amount > $from->balance) {
+            return back()
+                ->withErrors(['amount' => 'Saldo insuficiente para esta transferência.'])
+                ->withInput();
+        }
 
         try {
-            $this->walletService->transfer(
-                $from,
-                $request->to_user_id,
-                $request->amount
-            );
+            $this->walletService->transfer($from, $toUserId, $amount);
+
             return redirect()->route('wallet.index')
                 ->with('success', 'Transferência realizada com sucesso!');
         } catch (\InvalidArgumentException $e) {
-            return back()->withErrors($e->getMessage())->withInput();
+            // Se o serviço lançar exceção de negócio
+            return back()
+                ->withErrors(['transfer' => $e->getMessage()])
+                ->withInput();
         } catch (\Exception $e) {
+            // Erro inesperado
             report($e);
-            return back()->withErrors('transfer', 'Erro ao processar transferência.')->withInput();
+            Log::error('Erro na transferência', [
+                'from_user_id' => $from->id,
+                'to_user_id'   => $toUserId,
+                'amount'       => $amount,
+                'error'        => $e->getMessage(),
+            ]);
+
+            return back()
+                ->withErrors(['transfer' => 'Erro ao processar transferência.'])
+                ->withInput();
         }
     }
 
