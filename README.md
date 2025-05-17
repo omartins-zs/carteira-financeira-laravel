@@ -1,3 +1,4 @@
+
 # 💰 Carteira Financeira Laravel
 
 Este é um projeto de teste desenvolvido com Laravel + Breeze com o objetivo de gerenciar uma **carteira financeira** pessoal, onde usuários podem se registrar, autenticar e organizar suas finanças.
@@ -97,6 +98,20 @@ Ferramenta oficial do Laravel para inspeção de:
 O projeto utiliza **Laravel Breeze** com Blade como motor de templates, já com rotas e views de login, registro, redefinição de senha e verificação de e-mail.
 
 Além disso, conta com **autenticação em dois fatores (2FA)** e **notificações personalizadas** para envio do código de autenticação e verificação de e-mail.
+
+---
+
+## 📬 Filas e Jobs Assíncronos
+
+Este projeto suporta o uso de **filas** para o envio de e-mails, notificações e outros processos assíncronos.
+
+### ✳️ Comando para iniciar o worker:
+
+```bash
+docker-compose exec app php artisan queue:work
+```
+
+> Para rodar continuamente, você pode utilizar um processo supervisado no container, ou adicionar o comando em seu entrypoint customizado.
 
 ---
 
